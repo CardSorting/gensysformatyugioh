@@ -8,6 +8,7 @@ import { BudgetSandbox } from '@/components/BudgetSandbox';
 import { VisualPointShelves } from '@/components/VisualPointShelves';
 import { VisualLearningRoadmap } from '@/components/VisualLearningRoadmap';
 import { StrategySpotlight } from '@/components/StrategySpotlight';
+import { KonamiVideoShowcase } from '@/components/KonamiVideoShowcase';
 import { FaqAccordion } from '@/components/FaqAccordion';
 import cardsRaw from '@/data/cards.json';
 import { Card } from '@/types/card';
@@ -280,6 +281,11 @@ export default function WelcomeHomePage() {
           {/* Hero Visual Formula (Interactive Format Deck Rig) */}
           <HeroVisualFormula />
         </div>
+      </section>
+
+      {/* 3b. OFFICIAL KONAMI SHOWCASE (KENNETH WALKER III AT KONAMI HQ) */}
+      <section id="spotlight-video" style={{ padding: '24px 16px 8px 16px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+        <KonamiVideoShowcase />
       </section>
 
       {/* 4. UNIFIED RULES, ONTOLOGY & BATTLEFIELD CONSOLE */}

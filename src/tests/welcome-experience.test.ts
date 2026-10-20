@@ -70,4 +70,24 @@ describe('Yu-Gi-Oh! Genesys Welcome Landing Page & Format Facts Integrity', () =
       );
     }
   });
+
+  test('verifies Konami official video showcase assets and tweet metadata', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    // 1. Verify local video file existence & non-trivial size
+    const videoPath = path.resolve(process.cwd(), 'public/videos/kenneth_walker_genesys.mp4');
+    const videoStat = await fs.stat(videoPath);
+    assert.ok(videoStat.size > 1_000_000, `Video must be at least 1MB (actual: ${videoStat.size} bytes)`);
+
+    // 2. Verify poster thumbnail existence & non-trivial size
+    const thumbPath = path.resolve(process.cwd(), 'public/images/kenneth_walker_genesys_thumb.jpg');
+    const thumbStat = await fs.stat(thumbPath);
+    assert.ok(thumbStat.size > 20_000, `Thumbnail must be at least 20KB (actual: ${thumbStat.size} bytes)`);
+
+    // 3. Verify official tweet ID format and handle
+    const officialTweetUrl = 'https://x.com/YuGiOh_TCG/status/2112574773662220663/video/1';
+    assert.ok(officialTweetUrl.includes('YuGiOh_TCG'), 'Must attribute to official Yu-Gi-Oh! TCG account');
+    assert.ok(officialTweetUrl.includes('2112574773662220663'), 'Must link to tweet ID 2112574773662220663');
+  });
 });

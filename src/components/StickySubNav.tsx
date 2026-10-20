@@ -10,6 +10,7 @@ interface SubNavItem {
 
 const NAV_ITEMS: SubNavItem[] = [
   { id: 'hero', label: 'Overview', icon: '⚡' },
+  { id: 'spotlight-video', label: 'Konami Video', icon: '🎬' },
   { id: 'rules', label: 'Rules & Battlefield', icon: '🧭' },
   { id: 'sandbox', label: '100-Pt Sandbox', icon: '🎛️' },
   { id: 'shelves', label: 'Point Shelves', icon: '🏷️' },
