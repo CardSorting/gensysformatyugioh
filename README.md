@@ -4,8 +4,8 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Turbopack](https://img.shields.io/badge/Bundler-Turbopack-blueviolet?style=flat-square)](https://turbo.build/pack)
-[![Tests](https://img.shields.io/badge/Tests-58%2F58%20Passing-emerald?style=flat-square)](https://nodejs.org/api/test.html)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Production-00f0ff?style=flat-square&logo=vercel)](https://gensysygo.vercel.app)
+[![Tests](https://img.shields.io/badge/Tests-59%2F59%20Passing-emerald?style=flat-square)](https://nodejs.org/api/test.html)
 [![Storage](https://img.shields.io/badge/Storage-BroccoliDB%20CAS%20Vault-green?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
 
