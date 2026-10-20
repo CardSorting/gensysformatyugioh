@@ -9,8 +9,6 @@ import {
   DeckCardItem,
 } from '@/types/tournament';
 import {
-  getAllTournaments,
-  getTournamentById,
   getAdjacentDecks,
   generateYdkContent,
   generateTextDecklist,
@@ -26,23 +24,41 @@ interface TournamentDeckViewProps {
   canonicalPath?: string;
 }
 
+interface PointInvestment {
+  cardId: number;
+  name: string;
+  unitPoints: number;
+  totalPoints: number;
+  totalCount: number;
+  mainCount: number;
+  extraCount: number;
+  sideCount: number;
+  category: string;
+  type: string;
+  imageUrl: string;
+  imageCropped: string;
+  percentageOfBudget: number;
+}
+
 export function TournamentDeckView({
   tournament,
   deck,
 }: TournamentDeckViewProps) {
   const router = useRouter();
-  const allTournaments = getAllTournaments();
   const { prevDeck, nextDeck } = getAdjacentDecks(tournament.id, deck.id);
 
   const [viewMode, setViewMode] = useState<'visual' | 'text'>('visual');
   const [filterQuery, setFilterQuery] = useState('');
-  const [sectionFilter, setSectionFilter] = useState<'all' | 'monsters' | 'spells' | 'traps' | 'extra' | 'side'>('all');
+  const [sectionFilter, setSectionFilter] = useState<'all' | 'main' | 'monsters' | 'spells' | 'traps' | 'extra' | 'side' | 'pointed'>('all');
   const [copiedText, setCopiedText] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [inspectCard, setInspectCard] = useState<Card | null>(null);
   const [inspectList, setInspectList] = useState<DeckCardItem[]>([]);
   const [inspectIndex, setInspectIndex] = useState<number>(-1);
   const [inspectSection, setInspectSection] = useState<string>('');
+
+  // All cards combined
+  const allCards = useMemo(() => [...deck.mainDeck, ...deck.extraDeck, ...deck.sideDeck], [deck]);
 
   // Group Main Deck into Monsters, Spells, Traps
   const monsters = useMemo(() => deck.mainDeck.filter(c => c.category === 'monster'), [deck]);
@@ -54,16 +70,51 @@ export function TournamentDeckView({
   const synchros = useMemo(() => deck.extraDeck.filter(c => c.type.toLowerCase().includes('synchro')), [deck]);
   const xyzs = useMemo(() => deck.extraDeck.filter(c => c.type.toLowerCase().includes('xyz')), [deck]);
 
-  // High point investments (cards with point cost >= 15)
-  const highPointCards = useMemo(() => {
-    const all = [...deck.mainDeck, ...deck.extraDeck, ...deck.sideDeck];
-    return all.filter(c => c.points >= 15).sort((a, b) => b.totalPoints - a.totalPoints);
+  // Unified Point Investments Roster: Aggregates every card with points > 0 across Main, Extra, and Side
+  const pointInvestments = useMemo<PointInvestment[]>(() => {
+    const map = new Map<string, PointInvestment>();
+    const budget = deck.pointsSummary?.budget || 100;
+
+    const ingest = (c: DeckCardItem, section: 'main' | 'extra' | 'side') => {
+      if (c.points <= 0) return;
+      const key = `${c.cardId}_${c.name.toLowerCase()}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.totalCount += c.count;
+        existing.totalPoints += c.totalPoints;
+        if (section === 'main') existing.mainCount += c.count;
+        if (section === 'extra') existing.extraCount += c.count;
+        if (section === 'side') existing.sideCount += c.count;
+        existing.percentageOfBudget = (existing.totalPoints / budget) * 100;
+      } else {
+        map.set(key, {
+          cardId: c.cardId,
+          name: c.name,
+          unitPoints: c.points,
+          totalPoints: c.totalPoints,
+          totalCount: c.count,
+          mainCount: section === 'main' ? c.count : 0,
+          extraCount: section === 'extra' ? c.count : 0,
+          sideCount: section === 'side' ? c.count : 0,
+          category: c.category,
+          type: c.type,
+          imageUrl: c.imageUrl,
+          imageCropped: c.imageCropped,
+          percentageOfBudget: (c.totalPoints / budget) * 100,
+        });
+      }
+    };
+
+    deck.mainDeck.forEach(c => ingest(c, 'main'));
+    deck.extraDeck.forEach(c => ingest(c, 'extra'));
+    deck.sideDeck.forEach(c => ingest(c, 'side'));
+
+    return Array.from(map.values()).sort((a, b) => b.totalPoints - a.totalPoints || b.unitPoints - a.unitPoints);
   }, [deck]);
 
   // World-class Keyboard Ergonomics: [ / p for prev deck, ] / n for next deck, v to toggle view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept when user is typing in form controls
       const activeTag = (document.activeElement?.tagName || '').toUpperCase();
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
 
@@ -162,7 +213,6 @@ export function TournamentDeckView({
       setInspectIndex(index);
       setInspectSection(sectionName || '');
     } else {
-      const allCards = [...deck.mainDeck, ...deck.extraDeck, ...deck.sideDeck];
       const idx = allCards.findIndex(c => c.cardId === cardItem.cardId || c.name.toLowerCase() === cardItem.name.toLowerCase());
       setInspectList(allCards);
       setInspectIndex(idx >= 0 ? idx : 0);
@@ -184,24 +234,64 @@ export function TournamentDeckView({
     }
   };
 
-  const getPointBadgeStyle = (points: number) => {
-    if (points >= 50) return { bg: 'rgba(239, 68, 68, 0.25)', border: 'rgba(239, 68, 68, 0.7)', color: '#f87171' };
-    if (points >= 15) return { bg: 'rgba(245, 158, 11, 0.25)', border: 'rgba(245, 158, 11, 0.7)', color: '#fbbf24' };
-    if (points > 0) return { bg: 'rgba(6, 182, 212, 0.25)', border: 'rgba(6, 182, 212, 0.7)', color: '#38bdf8' };
-    return { bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', color: '#34d399' };
+  // Point chip styling based on point investment weight
+  const getCardPointStyle = (totalPoints: number) => {
+    if (totalPoints <= 0) return null;
+    if (totalPoints >= 25) {
+      return {
+        border: '1.5px solid rgba(245, 158, 11, 0.95)',
+        boxShadow: '0 0 12px rgba(245, 158, 11, 0.45)',
+        badgeBg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(180, 83, 9, 0.95))',
+        badgeBorder: 'rgba(251, 191, 36, 0.85)',
+        badgeColor: '#ffffff',
+        glowColor: '#fbbf24',
+      };
+    }
+    if (totalPoints >= 10) {
+      return {
+        border: '1.5px solid rgba(251, 146, 60, 0.9)',
+        boxShadow: '0 0 10px rgba(251, 146, 60, 0.35)',
+        badgeBg: 'linear-gradient(135deg, rgba(234, 88, 12, 0.92), rgba(194, 65, 12, 0.92))',
+        badgeBorder: 'rgba(253, 186, 116, 0.75)',
+        badgeColor: '#ffffff',
+        glowColor: '#fdba74',
+      };
+    }
+    if (totalPoints >= 5) {
+      return {
+        border: '1.5px solid rgba(0, 240, 255, 0.85)',
+        boxShadow: '0 0 9px rgba(0, 240, 255, 0.35)',
+        badgeBg: 'linear-gradient(135deg, rgba(2, 132, 199, 0.92), rgba(3, 105, 161, 0.92))',
+        badgeBorder: 'rgba(56, 189, 248, 0.75)',
+        badgeColor: '#ffffff',
+        glowColor: '#38bdf8',
+      };
+    }
+    return {
+      border: '1.5px solid rgba(16, 185, 129, 0.8)',
+      boxShadow: '0 0 8px rgba(16, 185, 129, 0.3)',
+      badgeBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.92), rgba(5, 150, 105, 0.92))',
+      badgeBorder: 'rgba(52, 211, 153, 0.75)',
+      badgeColor: '#ffffff',
+      glowColor: '#34d399',
+    };
   };
 
   const filterCards = (cards: DeckCardItem[]) => {
-    if (!filterQuery.trim()) return cards;
+    let list = cards;
+    if (sectionFilter === 'pointed') {
+      list = list.filter(c => c.points > 0);
+    }
+    if (!filterQuery.trim()) return list;
     const q = filterQuery.toLowerCase();
-    return cards.filter(c => c.name.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
+    return list.filter(c => c.name.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
   };
 
   const renderCardGrid = (cards: DeckCardItem[], sectionTitle: string = 'Deck') => {
     const list = filterCards(cards);
     if (list.length === 0) {
       return (
-        <div style={{ padding: '16px 0', color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic' }}>
+        <div style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center' }}>
           No matching cards in this section.
         </div>
       );
@@ -211,38 +301,43 @@ export function TournamentDeckView({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(92px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
           gap: 10,
         }}
       >
         {list.map((cardItem, index) => {
-          const badgeStyle = getPointBadgeStyle(cardItem.points);
+          const pointStyle = getCardPointStyle(cardItem.totalPoints);
           return (
             <div
               key={`${cardItem.section}-${cardItem.cardId}-${cardItem.name}`}
               onClick={() => openCardModal(cardItem, list, index, sectionTitle)}
-              title={`${cardItem.name} — ${cardItem.points} pts each (${cardItem.count}x)`}
+              title={`${cardItem.name} — ${cardItem.points > 0 ? `${cardItem.totalPoints} PTS (${cardItem.count}× @ ${cardItem.points}p ea)` : '0 PTS'}`}
               style={{
                 position: 'relative',
                 borderRadius: 8,
                 overflow: 'hidden',
                 background: 'var(--bg-surface-raised)',
-                border: '1px solid var(--border-subtle)',
+                border: pointStyle ? pointStyle.border : '1px solid var(--border-subtle)',
+                boxShadow: pointStyle ? pointStyle.boxShadow : 'none',
                 cursor: 'pointer',
                 transition: 'transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.borderColor = 'var(--color-cyan)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 240, 255, 0.25)';
+                if (pointStyle) {
+                  e.currentTarget.style.boxShadow = `0 8px 20px ${pointStyle.glowColor}55`;
+                } else {
+                  e.currentTarget.style.borderColor = 'var(--color-cyan)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 240, 255, 0.25)';
+                }
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.border = pointStyle ? pointStyle.border : '1px solid var(--border-subtle)';
+                e.currentTarget.style.boxShadow = pointStyle ? pointStyle.boxShadow : 'none';
               }}
             >
-              {/* Card Image */}
+              {/* Card Image Frame */}
               <div style={{ aspectRatio: '421 / 614', width: '100%', position: 'relative', background: '#080a0f' }}>
                 {getProxiedImageUrl(cardItem.cardId, 'small', cardItem.imageUrl) ? (
                   <img
@@ -280,55 +375,94 @@ export function TournamentDeckView({
                     top: 4,
                     left: 4,
                     background: 'rgba(7, 9, 14, 0.92)',
-                    border: '1px solid var(--border-medium)',
+                    backdropFilter: 'blur(4px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     color: '#fff',
                     fontFamily: 'var(--font-mono)',
                     fontWeight: 900,
-                    fontSize: '0.75rem',
-                    padding: '1px 6px',
+                    fontSize: '0.725rem',
+                    padding: '1px 5px',
                     borderRadius: 4,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.7)',
+                    zIndex: 2,
                   }}
                 >
                   {cardItem.count}×
                 </div>
 
-                {/* Point Badge (Top-Right) */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                    background: badgeStyle.bg,
-                    border: `1px solid ${badgeStyle.border}`,
-                    color: badgeStyle.color,
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 900,
-                    fontSize: '0.675rem',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
-                  }}
-                >
-                  {cardItem.points}p
-                </div>
+                {/* Point Chip (Top-Right) - ONLY FOR POINT-BEARING CARDS */}
+                {pointStyle && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      background: pointStyle.badgeBg,
+                      border: `1px solid ${pointStyle.badgeBorder}`,
+                      color: pointStyle.badgeColor,
+                      fontFamily: 'var(--font-mono)',
+                      borderRadius: 4,
+                      padding: cardItem.count > 1 ? '1px 5px' : '2px 6px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1.1,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.7)',
+                      zIndex: 2,
+                    }}
+                  >
+                    <span style={{ fontWeight: 900, fontSize: '0.725rem' }}>
+                      {cardItem.totalPoints}p
+                    </span>
+                    {cardItem.count > 1 && (
+                      <span style={{ fontSize: '0.55rem', opacity: 0.92, fontWeight: 700 }}>
+                        {cardItem.points} ea
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Card Name Footer */}
+              {/* Card Name Footer with Point Subtotal */}
               <div
                 style={{
                   padding: '4px 6px',
-                  background: 'rgba(11, 15, 23, 0.95)',
-                  fontSize: '0.675rem',
-                  fontWeight: 600,
-                  color: '#fff',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  textAlign: 'center',
+                  background: pointStyle ? 'rgba(7, 9, 14, 0.98)' : 'rgba(11, 15, 23, 0.95)',
+                  borderTop: pointStyle ? `1px solid ${pointStyle.badgeBorder}44` : '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 4,
                 }}
               >
-                {cardItem.name}
+                <span
+                  style={{
+                    fontSize: '0.675rem',
+                    fontWeight: 600,
+                    color: '#fff',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    flex: 1,
+                    textAlign: pointStyle ? 'left' : 'center',
+                  }}
+                >
+                  {cardItem.name}
+                </span>
+                {pointStyle && (
+                  <span
+                    style={{
+                      fontSize: '0.625rem',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 800,
+                      color: pointStyle.glowColor,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {cardItem.totalPoints}p
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -340,9 +474,9 @@ export function TournamentDeckView({
   const renderTextChecklist = (cards: DeckCardItem[], title: string, totalCount: number, totalPoints: number) => {
     const list = filterCards(cards);
     return (
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid var(--border-subtle)' }}>
-          <h4 style={{ margin: 0, color: '#fff', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h4 style={{ margin: 0, color: '#fff', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>{title}</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 500 }}>({totalCount} cards)</span>
           </h4>
@@ -388,7 +522,7 @@ export function TournamentDeckView({
                         <img
                           src={getProxiedImageUrl(c.cardId, 'cropped', c.imageCropped)}
                           alt=""
-                          style={{ width: 20, height: 20, borderRadius: 3, objectFit: 'cover' }}
+                          style={{ width: 22, height: 22, borderRadius: 3, objectFit: 'cover' }}
                         />
                       ) : null}
                       <span>{c.name}</span>
@@ -398,10 +532,10 @@ export function TournamentDeckView({
                     {c.type}
                   </td>
                   <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)', color: c.points > 0 ? 'var(--color-cyan)' : 'var(--text-dim)' }}>
-                    {c.points}p
+                    {c.points > 0 ? `${c.points}p` : '—'}
                   </td>
                   <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: c.totalPoints > 0 ? 'var(--color-gold-light)' : 'var(--text-dim)' }}>
-                    {c.totalPoints}p
+                    {c.totalPoints > 0 ? `${c.totalPoints} PTS` : '—'}
                   </td>
                 </tr>
               ))}
@@ -413,8 +547,8 @@ export function TournamentDeckView({
   };
 
   const getPlacementBadge = (rank: number) => {
-    if (rank === 1) return { text: '🏆 1st Place Champion', bg: 'rgba(245, 158, 11, 0.25)', border: 'rgba(245, 158, 11, 0.7)', color: 'var(--color-gold-light)' };
-    if (rank === 2) return { text: '🥈 2nd Place Finalist', bg: 'rgba(203, 213, 225, 0.2)', border: 'rgba(203, 213, 225, 0.6)', color: '#e2e8f0' };
+    if (rank === 1) return { text: '🏆 Champion (1st)', bg: 'rgba(245, 158, 11, 0.25)', border: 'rgba(245, 158, 11, 0.7)', color: 'var(--color-gold-light)' };
+    if (rank === 2) return { text: '🥈 Finalist (2nd)', bg: 'rgba(203, 213, 225, 0.2)', border: 'rgba(203, 213, 225, 0.6)', color: '#e2e8f0' };
     if (rank <= 4) return { text: '🥉 Top 4 Semifinalist', bg: 'rgba(56, 189, 248, 0.2)', border: 'rgba(56, 189, 248, 0.6)', color: 'var(--color-cyan)' };
     if (rank <= 8) return { text: 'Top 8 Quarterfinalist', bg: 'rgba(168, 85, 247, 0.2)', border: 'rgba(168, 85, 247, 0.5)', color: '#c084fc' };
     if (rank <= 16) return { text: 'Top 16 Qualifier', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', color: '#34d399' };
@@ -425,160 +559,122 @@ export function TournamentDeckView({
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 60px 16px', width: '100%', flex: 1 }}>
-      {/* 1. Ergonomic Breadcrumb Navigation */}
+      {/* 1. Sleek Top Navigation Bar: Breadcrumbs + Seed Pager */}
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          fontSize: '0.8rem',
-          color: 'var(--text-dim)',
-          margin: '20px 0 16px 0',
-          flexWrap: 'wrap',
-        }}
-      >
-        <Link href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-          Home
-        </Link>
-        <span>›</span>
-        <Link href="/tournaments" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-          Tournaments
-        </Link>
-        <span>›</span>
-        <Link href={`/tournaments/${tournament.id}`} style={{ color: 'var(--color-cyan)', textDecoration: 'none', fontWeight: 600 }}>
-          {tournament.shortTitle || tournament.title}
-        </Link>
-        <span>›</span>
-        <Link href={`/tournaments/${tournament.id}`} style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>
-          Decks
-        </Link>
-        <span>›</span>
-        <span style={{ color: '#fff', fontWeight: 700 }}>
-          {deck.name} ({deck.archetype})
-        </span>
-      </div>
-
-      {/* 2. Tournament Context & Switcher Bar */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '12px 18px',
-          marginBottom: 20,
-          display: 'flex',
-          alignItems: 'center',
           justifyContent: 'space-between',
-          flexWrap: 'wrap',
+          alignItems: 'center',
           gap: 12,
-          borderLeft: '4px solid var(--color-cyan)',
+          margin: '16px 0 12px 0',
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.1rem' }}>🏆</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Link
-                  href={`/tournaments/${tournament.id}`}
-                  style={{
-                    color: '#fff',
-                    textDecoration: 'none',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                  }}
-                  title="View full tournament overview and all decklists"
-                >
-                  {tournament.title}
-                </Link>
-                <span
-                  style={{
-                    fontSize: '0.65rem',
-                    fontFamily: 'var(--font-mono)',
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    background: 'rgba(2, 132, 199, 0.2)',
-                    color: 'var(--color-cyan)',
-                    border: '1px solid rgba(2, 132, 199, 0.4)',
-                    fontWeight: 700,
-                  }}
-                >
-                  {tournament.tier}
-                </span>
-              </div>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)', marginTop: 2 }}>
-                📅 {tournament.date} • 📍 {tournament.location} • 📜 {tournament.format}
-              </div>
-            </div>
-          </div>
+        {/* Left: Breadcrumbs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--text-dim)', flexWrap: 'wrap' }}>
+          <Link href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            Home
+          </Link>
+          <span>›</span>
+          <Link href="/tournaments" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            Tournaments
+          </Link>
+          <span>›</span>
+          <Link href={`/tournaments/${tournament.id}`} style={{ color: 'var(--color-cyan)', textDecoration: 'none', fontWeight: 600 }}>
+            {tournament.shortTitle || tournament.title}
+          </Link>
+          <span>›</span>
+          <span style={{ color: '#fff', fontWeight: 700 }}>
+            #{deck.rank} {deck.name}
+          </span>
         </div>
 
-        {/* Tournament Switcher Select */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>
-            Switch Event:
-          </label>
+        {/* Right: Ergonomic Seed Pager & Jump Select */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {prevDeck ? (
+            <Link
+              href={`/tournaments/${tournament.id}/decks/${prevDeck.id}`}
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '4px 8px', textDecoration: 'none' }}
+              title={`Previous Seed: #${prevDeck.rank} ${prevDeck.name} — Hotkey: [`}
+            >
+              <span>← #{prevDeck.rank}</span>
+            </Link>
+          ) : (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', padding: '4px 8px' }}>First Seed</span>
+          )}
+
           <select
-            value={tournament.id}
-            onChange={e => {
-              const targetTourney = getTournamentById(e.target.value);
-              if (targetTourney && targetTourney.decks.length > 0) {
-                router.push(`/tournaments/${targetTourney.id}/decks/${targetTourney.decks[0].id}`);
-              } else {
-                router.push(`/tournaments/${e.target.value}`);
-              }
-            }}
+            value={deck.id}
+            onChange={e => router.push(`/tournaments/${tournament.id}/decks/${e.target.value}`)}
             style={{
               background: 'var(--bg-primary)',
               border: '1px solid var(--border-medium)',
               color: '#fff',
-              padding: '6px 12px',
+              padding: '4px 8px',
               borderRadius: 6,
-              fontSize: '0.8rem',
+              fontSize: '0.75rem',
               outline: 'none',
               cursor: 'pointer',
+              maxWidth: 220,
             }}
+            title="Jump to any deck in this tournament"
           >
-            {allTournaments.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.shortTitle} ({t.totalDecks} Decks)
+            {tournament.decks.map(d => (
+              <option key={d.id} value={d.id}>
+                #{d.rank} {d.name} ({d.archetype})
               </option>
             ))}
           </select>
+
+          {nextDeck ? (
+            <Link
+              href={`/tournaments/${tournament.id}/decks/${nextDeck.id}`}
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '4px 8px', textDecoration: 'none' }}
+              title={`Next Seed: #${nextDeck.rank} ${nextDeck.name} — Hotkey: ]`}
+            >
+              <span>#{nextDeck.rank} →</span>
+            </Link>
+          ) : (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', padding: '4px 8px' }}>Last Seed</span>
+          )}
         </div>
       </div>
 
-      {/* 3. Hero Deck Profile Header */}
+      {/* 2. Unified Master Hero Header (Identity + Deck Composition + Action Suite) */}
       <div
         className="glass-panel"
         style={{
-          padding: '24px',
-          marginBottom: 20,
-          background: 'linear-gradient(135deg, rgba(11, 15, 23, 0.95) 0%, rgba(17, 24, 39, 0.85) 100%)',
+          padding: '20px 22px',
+          marginBottom: 16,
+          background: 'linear-gradient(135deg, rgba(11, 15, 23, 0.95) 0%, rgba(19, 25, 36, 0.88) 100%)',
           border: deck.rank === 1 ? '1px solid rgba(245, 158, 11, 0.6)' : '1px solid var(--border-subtle)',
           boxShadow: deck.rank === 1 ? '0 0 28px rgba(245, 158, 11, 0.2)' : 'var(--shadow-md)',
-          position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          {/* Signature Card Thumbnail Hero */}
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Signature Card Showcase Thumbnail */}
           <div
             onClick={() => {
-              const sig = deck.mainDeck.find(c => c.name === deck.signatureCard) ||
-                          deck.extraDeck.find(c => c.name === deck.signatureCard) ||
-                          deck.sideDeck.find(c => c.name === deck.signatureCard);
+              const sig = allCards.find(c => c.name.toLowerCase() === deck.signatureCard.toLowerCase() || c.cardId === deck.signatureCardId);
               if (sig) openCardModal(sig);
             }}
             style={{
-              width: 120,
-              height: 120,
-              borderRadius: 12,
+              width: 80,
+              height: 104,
+              borderRadius: 8,
               overflow: 'hidden',
               background: '#040608',
               border: deck.rank === 1 ? '2px solid var(--color-gold)' : '2px solid var(--color-cyan)',
               flexShrink: 0,
               position: 'relative',
-              boxShadow: 'var(--shadow-md)',
               cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.6)',
+              transition: 'transform 0.15s ease',
             }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             title={`Click to inspect signature card: ${deck.signatureCard}`}
           >
             {getDeckThumbnailUrl(deck.signatureCardId, deck.thumbnailUrl) ? (
@@ -593,8 +689,8 @@ export function TournamentDeckView({
                 position: 'absolute',
                 bottom: 0,
                 insetInline: 0,
-                background: 'rgba(0,0,0,0.8)',
-                fontSize: '0.65rem',
+                background: 'rgba(7, 9, 14, 0.92)',
+                fontSize: '0.625rem',
                 textAlign: 'center',
                 color: 'var(--color-gold-light)',
                 fontWeight: 800,
@@ -605,46 +701,47 @@ export function TournamentDeckView({
             </div>
           </div>
 
-          {/* Player & Archetype Info */}
+          {/* Player Identity & Composition Ticker */}
           <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
               <span
                 style={{
                   background: placement.bg,
                   border: `1px solid ${placement.border}`,
                   color: placement.color,
-                  padding: '3px 10px',
-                  borderRadius: 6,
-                  fontSize: '0.75rem',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  fontSize: '0.725rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.5px',
                 }}
               >
                 {placement.text}
               </span>
-
               <span
                 style={{
                   background: 'rgba(16, 185, 129, 0.15)',
                   border: '1px solid rgba(16, 185, 129, 0.4)',
                   color: '#34d399',
-                  padding: '3px 10px',
-                  borderRadius: 6,
+                  padding: '2px 8px',
+                  borderRadius: 4,
                   fontSize: '0.725rem',
                   fontWeight: 700,
                   fontFamily: 'var(--font-mono)',
                 }}
               >
-                ✓ 100/100 BUDGET LEGAL
+                ✓ 100/100 PTS LEGAL
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                {tournament.shortTitle}
               </span>
             </div>
 
             <h1
               style={{
-                margin: '0 0 4px 0',
+                margin: '0 0 2px 0',
                 color: '#fff',
-                fontSize: '1.9rem',
+                fontSize: '1.65rem',
                 fontWeight: 900,
                 fontFamily: 'var(--font-display)',
                 letterSpacing: '0.5px',
@@ -655,142 +752,119 @@ export function TournamentDeckView({
 
             <div
               style={{
-                fontSize: '1.1rem',
+                fontSize: '0.95rem',
                 color: 'var(--color-cyan)',
                 fontWeight: 700,
-                marginBottom: 10,
+                marginBottom: 6,
               }}
             >
               {deck.archetype}
             </div>
 
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               <div>
                 <span style={{ color: 'var(--text-dim)' }}>Signature: </span>
                 <span style={{ color: '#fff', fontWeight: 600 }}>{deck.signatureCard}</span>
               </div>
               <div>
                 <span style={{ color: 'var(--text-dim)' }}>Main: </span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.main} cards</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.main}</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', marginLeft: 4 }}>
+                  ({monsters.reduce((a, b) => a + b.count, 0)}⚔️ {spells.reduce((a, b) => a + b.count, 0)}📜 {traps.reduce((a, b) => a + b.count, 0)}🛡️)
+                </span>
               </div>
               <div>
                 <span style={{ color: 'var(--text-dim)' }}>Extra: </span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.extra} cards</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.extra}</span>
+                {xyzs.length > 0 && <span style={{ color: '#38bdf8', fontSize: '0.7rem', marginLeft: 4 }}>(Xyz)</span>}
+                {fusions.length > 0 && <span style={{ color: '#c084fc', fontSize: '0.7rem', marginLeft: 4 }}>(Fusion)</span>}
+                {synchros.length > 0 && <span style={{ color: '#e2e8f0', fontSize: '0.7rem', marginLeft: 4 }}>(Synchro)</span>}
               </div>
               <div>
                 <span style={{ color: 'var(--text-dim)' }}>Side: </span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.side} cards</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{deck.counts.side}</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Prev / Next Deck Cycling & Jump Dropdown */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 8 }}>
-              {prevDeck ? (
-                <Link
-                  href={`/tournaments/${tournament.id}/decks/${prevDeck.id}`}
-                  className="btn btn-sm btn-secondary"
-                  title={`Previous Deck: #${prevDeck.rank} ${prevDeck.name} (${prevDeck.archetype}) — Shortcut: [`}
-                  style={{ textDecoration: 'none', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <span>← #{prevDeck.rank} {prevDeck.name}</span>
-                  <kbd style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: 3, background: 'rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>[</kbd>
-                </Link>
-              ) : (
-                <button disabled className="btn btn-sm btn-secondary" style={{ opacity: 0.4, cursor: 'not-allowed', fontSize: '0.775rem' }}>
-                  ← First Seed
-                </button>
-              )}
+          {/* Action Suite (Simulator .YDK, Copy, Share, Print) */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              onClick={handleDownloadYdk}
+              className="btn btn-sm btn-primary"
+              style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+              title="Download standard Yu-Gi-Oh simulator .ydk file (EDOPro, Omega, DB)"
+            >
+              <span>💾 .YDK</span>
+            </button>
 
-              {nextDeck ? (
-                <Link
-                  href={`/tournaments/${tournament.id}/decks/${nextDeck.id}`}
-                  className="btn btn-sm btn-secondary"
-                  title={`Next Deck: #${nextDeck.rank} ${nextDeck.name} (${nextDeck.archetype}) — Shortcut: ]`}
-                  style={{ textDecoration: 'none', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <span>#{nextDeck.rank} {nextDeck.name} →</span>
-                  <kbd style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: 3, background: 'rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>]</kbd>
-                </Link>
-              ) : (
-                <button disabled className="btn btn-sm btn-secondary" style={{ opacity: 0.4, cursor: 'not-allowed', fontSize: '0.775rem' }}>
-                  Last Seed →
-                </button>
-              )}
-            </div>
+            <button
+              onClick={handleCopyText}
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+              title="Copy decklist to clipboard"
+            >
+              <span>{copiedText ? '✓ Copied!' : '📋 Copy'}</span>
+            </button>
 
-            {/* Quick Player & Seed Jump Select */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 600 }}>
-                Jump to Seed:
-              </label>
-              <select
-                value={deck.id}
-                onChange={e => router.push(`/tournaments/${tournament.id}/decks/${e.target.value}`)}
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-medium)',
-                  color: '#fff',
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                  fontSize: '0.75rem',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  maxWidth: 220,
-                }}
-              >
-                {tournament.decks.map(d => (
-                  <option key={d.id} value={d.id}>
-                    #{d.rank} {d.name} ({d.archetype})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <button
+              onClick={handleCopyLink}
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '6px 10px' }}
+              title="Copy share link"
+            >
+              <span>{copiedLink ? '✓ Linked!' : '🔗 Share'}</span>
+            </button>
+
+            <button
+              onClick={handlePrint}
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '6px 10px' }}
+              title="Print deck sheet"
+            >
+              <span>🖨️ Print</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 4. Genesys 100-Point Budget Meter & High Point Investments */}
+      {/* 3. Genesys 100-Point Budget Allocation & Investment Showcase */}
       <div
         className="glass-panel"
         style={{
-          padding: '18px 20px',
-          marginBottom: 20,
+          padding: '16px 20px',
+          marginBottom: 16,
+          borderLeft: '4px solid var(--color-gold)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>
-          <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Genesys Format 100-Point Budget Breakdown
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
-              Official Format Rule: Every competitive deck is capped at exactly 100 points maximum across Main, Extra, and Side Decks.
+        {/* Meter Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '1.2rem' }}>💎</span>
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Genesys 100-Point Format Budget Allocation
+              </div>
+              <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)' }}>
+                {pointInvestments.length} cards utilized to reach {deck.pointsSummary.total} / 100 PTS cap
+              </div>
             </div>
           </div>
 
+          {/* Visual Gauge */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontFamily: 'var(--font-mono)' }}>
-            <span style={{ fontSize: '1.6rem', fontWeight: 900, color: deck.pointsSummary.total === 100 ? 'var(--color-gold-light)' : 'var(--color-cyan)' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: deck.pointsSummary.total === 100 ? 'var(--color-gold-light)' : 'var(--color-cyan)' }}>
               {deck.pointsSummary.total}
             </span>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>/ 100 PTS</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>/ 100 PTS</span>
             <span
               style={{
-                fontSize: '0.7rem',
+                fontSize: '0.675rem',
                 padding: '2px 6px',
                 borderRadius: 4,
                 background: 'rgba(16, 185, 129, 0.2)',
                 color: '#34d399',
                 fontWeight: 700,
-                marginLeft: 4,
               }}
             >
               100% UTILIZED
@@ -798,16 +872,16 @@ export function TournamentDeckView({
           </div>
         </div>
 
-        {/* Point Breakdown Bar */}
+        {/* Segmented Proportional Bar */}
         <div
           style={{
-            height: 12,
-            borderRadius: 6,
+            height: 10,
+            borderRadius: 5,
             background: 'rgba(0, 0, 0, 0.5)',
             border: '1px solid var(--border-subtle)',
             overflow: 'hidden',
             display: 'flex',
-            marginBottom: 10,
+            marginBottom: 8,
           }}
         >
           <div
@@ -833,60 +907,178 @@ export function TournamentDeckView({
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-          <div style={{ display: 'flex', gap: 16 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-cyan)' }}>
+        {/* Legend */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, fontSize: '0.725rem', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 14 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--color-cyan)' }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--color-cyan)' }} />
-              Main Deck: <strong>{deck.pointsSummary.main} pts</strong>
+              Main Deck: <strong>{deck.pointsSummary.main} PTS</strong>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-gold-light)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--color-gold-light)' }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--color-gold)' }} />
-              Extra Deck: <strong>{deck.pointsSummary.extra} pts</strong>
+              Extra Deck: <strong>{deck.pointsSummary.extra} PTS</strong>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#34d399' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#34d399' }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981' }} />
-              Side Deck: <strong>{deck.pointsSummary.side} pts</strong>
+              Side Deck: <strong>{deck.pointsSummary.side} PTS</strong>
             </span>
           </div>
 
           <div style={{ color: 'var(--text-dim)' }}>
-            Unused Budget: <strong>{deck.pointsSummary.remaining} pts</strong>
+            Unused Budget: <strong>{deck.pointsSummary.remaining} PTS</strong>
           </div>
         </div>
 
-        {/* High Point Investments Pill Row */}
-        {highPointCards.length > 0 && (
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
-            <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>
-              Primary Point Investments (≥ 15 pts):
+        {/* Point Investment Roster (Complete Breakdown of all Pointed Cards) */}
+        {pointInvestments.length > 0 && (
+          <div style={{ paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.5px' }}>
+                Primary Point Investments Breakdown ({pointInvestments.length} Cards):
+              </div>
+              <button
+                onClick={() => setSectionFilter(prev => prev === 'pointed' ? 'all' : 'pointed')}
+                style={{
+                  background: sectionFilter === 'pointed' ? 'var(--color-cyan)' : 'rgba(255, 255, 255, 0.06)',
+                  color: sectionFilter === 'pointed' ? '#07090e' : 'var(--text-muted)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 4,
+                  padding: '2px 8px',
+                  fontSize: '0.675rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {sectionFilter === 'pointed' ? '✓ Showing Pointed Only' : '🔍 Filter Deckboard to Pointed'}
+              </button>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {highPointCards.map(c => {
-                const b = getPointBadgeStyle(c.points);
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 8,
+              }}
+            >
+              {pointInvestments.map(card => {
+                const pStyle = getCardPointStyle(card.totalPoints);
                 return (
-                  <button
-                    key={`high-${c.section}-${c.cardId}`}
-                    onClick={() => openCardModal(c)}
+                  <div
+                    key={`invest-${card.cardId}-${card.name}`}
+                    onClick={() => {
+                      const foundCard = getKnownCard(card.cardId, card.name);
+                      if (foundCard) {
+                        setInspectCard(foundCard);
+                      } else {
+                        openCardModal({
+                          cardId: card.cardId,
+                          name: card.name,
+                          count: card.totalCount,
+                          points: card.unitPoints,
+                          totalPoints: card.totalPoints,
+                          type: card.type,
+                          category: card.category,
+                          section: card.mainCount > 0 ? 'main' : 'side',
+                          imageUrl: card.imageUrl,
+                          imageCropped: card.imageCropped,
+                        });
+                      }
+                    }}
                     style={{
                       background: 'var(--bg-primary)',
-                      border: `1px solid ${b.border}`,
-                      borderRadius: 6,
-                      padding: '4px 8px',
+                      border: pStyle ? pStyle.border : '1px solid var(--border-subtle)',
+                      borderRadius: 8,
+                      padding: '6px 10px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 10,
                       cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      color: '#fff',
+                      transition: 'all 0.15s ease',
                     }}
-                    title={`Click to inspect ${c.name} (${c.points} pts)`}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.background = 'var(--bg-surface-raised)';
+                      if (pStyle) e.currentTarget.style.boxShadow = `0 4px 12px ${pStyle.glowColor}44`;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.background = 'var(--bg-primary)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                    title={`Click to inspect ${card.name} (${card.totalPoints} PTS — ${card.percentageOfBudget.toFixed(0)}% of deck budget)`}
                   >
-                    <span style={{ color: b.color, fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-                      {c.points}p
-                    </span>
-                    <span style={{ fontWeight: 600 }}>{c.name}</span>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>×{c.count}</span>
-                  </button>
+                    {/* Cropped Artwork */}
+                    <div
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        background: '#040608',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      }}
+                    >
+                      {getProxiedImageUrl(card.cardId, 'cropped', card.imageCropped) ? (
+                        <img
+                          src={getProxiedImageUrl(card.cardId, 'cropped', card.imageCropped)}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
+                          🃏
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card Title & Section Counts */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {card.name}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.675rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          {card.totalCount}× ({card.unitPoints}p ea)
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {card.mainCount > 0 && card.sideCount > 0
+                            ? `${card.mainCount} Main + ${card.sideCount} Side`
+                            : card.mainCount > 0
+                            ? `${card.mainCount} Main`
+                            : `${card.sideCount} Side`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Total Points & Share */}
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 900,
+                          fontSize: '0.9rem',
+                          color: pStyle?.glowColor || 'var(--color-cyan)',
+                        }}
+                      >
+                        {card.totalPoints} PTS
+                      </div>
+                      <div style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+                        {card.percentageOfBudget.toFixed(0)}% budget
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -894,249 +1086,87 @@ export function TournamentDeckView({
         )}
       </div>
 
-      {/* 4b. Deck Composition & Card Type Curve */}
+      {/* 4. Unified Sticky Control Toolbar (View Mode + Section Filter Pills + Search) */}
       <div
         className="glass-panel"
         style={{
-          padding: '16px 20px',
-          marginBottom: 20,
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>
-          <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Deck Composition &amp; Card Type Distribution
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
-              Total: {deck.counts.main + deck.counts.extra + deck.counts.side} cards • Main: {deck.counts.main} • Extra: {deck.counts.extra} • Side: {deck.counts.side}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-            <span style={{ color: 'var(--color-gold-light)', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--color-gold)' }} />
-              Monsters: <strong>{monsters.reduce((a, b) => a + b.count, 0)} ({((monsters.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100).toFixed(0)}%)</strong>
-            </span>
-            <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981' }} />
-              Spells: <strong>{spells.reduce((a, b) => a + b.count, 0)} ({((spells.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100).toFixed(0)}%)</strong>
-            </span>
-            <span style={{ color: '#f472b6', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: '#ec4899' }} />
-              Traps: <strong>{traps.reduce((a, b) => a + b.count, 0)} ({((traps.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100).toFixed(0)}%)</strong>
-            </span>
-          </div>
-        </div>
-
-        {/* Horizontal Main Deck Card Type Ratio Bar */}
-        <div
-          style={{
-            height: 8,
-            borderRadius: 4,
-            background: 'rgba(0,0,0,0.5)',
-            border: '1px solid var(--border-subtle)',
-            overflow: 'hidden',
-            display: 'flex',
-            marginBottom: 10,
-          }}
-        >
-          <div
-            title={`Monsters: ${monsters.reduce((a, b) => a + b.count, 0)}`}
-            style={{
-              width: `${(monsters.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100}%`,
-              background: 'linear-gradient(90deg, #d97706, #f59e0b)',
-            }}
-          />
-          <div
-            title={`Spells: ${spells.reduce((a, b) => a + b.count, 0)}`}
-            style={{
-              width: `${(spells.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100}%`,
-              background: 'linear-gradient(90deg, #059669, #10b981)',
-            }}
-          />
-          <div
-            title={`Traps: ${traps.reduce((a, b) => a + b.count, 0)}`}
-            style={{
-              width: `${(traps.reduce((a, b) => a + b.count, 0) / deck.counts.main) * 100}%`,
-              background: 'linear-gradient(90deg, #db2777, #ec4899)',
-            }}
-          />
-        </div>
-
-        {/* Extra Deck Mechanics Breakdown */}
-        {deck.counts.extra > 0 && (
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-            <span style={{ color: 'var(--text-dim)' }}>Extra Deck:</span>
-            {fusions.length > 0 && (
-              <span style={{ color: '#c084fc', fontWeight: 600 }}>
-                🟣 Fusion: {fusions.reduce((a, b) => a + b.count, 0)}
-              </span>
-            )}
-            {synchros.length > 0 && (
-              <span style={{ color: '#e2e8f0', fontWeight: 600 }}>
-                ⚪ Synchro: {synchros.reduce((a, b) => a + b.count, 0)}
-              </span>
-            )}
-            {xyzs.length > 0 && (
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>
-                ⚫ Xyz: {xyzs.reduce((a, b) => a + b.count, 0)}
-              </span>
-            )}
-            <span style={{ color: 'var(--text-dim)', fontStyle: 'italic', marginLeft: 'auto' }}>
-              ⚠️ Pendulum &amp; Link prohibited in Genesys
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* 5. Action Toolbar: View Mode, Filter, Copy & Simulator Download */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '12px 16px',
-          marginBottom: 20,
+          position: 'sticky',
+          top: 8,
+          zIndex: 10,
+          padding: '8px 12px',
+          marginBottom: 16,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 8,
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6)',
         }}
       >
-        {/* Left: View Mode Toggle & Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: 3, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-            <button
-              onClick={() => setViewMode('visual')}
-              style={{
-                background: viewMode === 'visual' ? 'var(--bg-surface-raised)' : 'transparent',
-                border: 'none',
-                color: viewMode === 'visual' ? 'var(--color-cyan)' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: 4,
-                fontSize: '0.775rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-              title="Shortcut: Press V to toggle view"
-            >
-              <span>⊞</span>
-              <span>Visual Cardboard</span>
-              <kbd style={{ fontSize: '0.625rem', padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>V</kbd>
-            </button>
-            <button
-              onClick={() => setViewMode('text')}
-              style={{
-                background: viewMode === 'text' ? 'var(--bg-surface-raised)' : 'transparent',
-                border: 'none',
-                color: viewMode === 'text' ? 'var(--color-cyan)' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: 4,
-                fontSize: '0.775rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-              title="Shortcut: Press V to toggle view"
-            >
-              <span>☰</span>
-              <span>Text / Deck Sheet</span>
-              <kbd style={{ fontSize: '0.625rem', padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>V</kbd>
-            </button>
-          </div>
-
-          {/* In-deck search input */}
-          <input
-            type="text"
-            placeholder="Search cards in deck..."
-            value={filterQuery}
-            onChange={e => setFilterQuery(e.target.value)}
+        {/* Left: View Mode Toggle */}
+        <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: 2, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+          <button
+            onClick={() => setViewMode('visual')}
             style={{
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border-subtle)',
-              color: '#fff',
-              padding: '6px 12px',
-              borderRadius: 6,
-              fontSize: '0.775rem',
-              outline: 'none',
-              width: 180,
+              background: viewMode === 'visual' ? 'var(--bg-surface-raised)' : 'transparent',
+              border: 'none',
+              color: viewMode === 'visual' ? 'var(--color-cyan)' : 'var(--text-muted)',
+              padding: '5px 10px',
+              borderRadius: 4,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
             }}
-          />
-          {filterQuery && (
-            <button
-              onClick={() => setFilterQuery('')}
-              style={{ background: 'none', border: 'none', color: 'var(--color-red)', fontSize: '0.75rem', cursor: 'pointer' }}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        {/* Right: Export, Print & Simulator actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <button
-            onClick={handleCopyText}
-            className="btn btn-sm btn-secondary"
-            style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-            title="Copy decklist with card counts and points to clipboard"
+            title="Visual Cardboard (Hotkey: V)"
           >
-            <span>{copiedText ? '✓ Copied Deck!' : '📋 Copy Text'}</span>
+            <span>⊞ Visual</span>
           </button>
-
           <button
-            onClick={handleDownloadYdk}
-            className="btn btn-sm btn-secondary"
-            style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-            title="Download standard Yu-Gi-Oh simulator .ydk file (EDOPro, Omega, DuelingBook)"
+            onClick={() => setViewMode('text')}
+            style={{
+              background: viewMode === 'text' ? 'var(--bg-surface-raised)' : 'transparent',
+              border: 'none',
+              color: viewMode === 'text' ? 'var(--color-cyan)' : 'var(--text-muted)',
+              padding: '5px 10px',
+              borderRadius: 4,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+            title="Text / Deck Sheet (Hotkey: V)"
           >
-            <span>💾 Download .YDK</span>
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="btn btn-sm btn-secondary"
-            style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-            title="Print official tournament deck sheet"
-          >
-            <span>🖨️ Print Sheet</span>
-          </button>
-
-          <button
-            onClick={handleCopyLink}
-            className="btn btn-sm btn-secondary"
-            style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: 6 }}
-            title="Copy shareable link to this deck"
-          >
-            <span>{copiedLink ? '✓ Copied Link!' : '🔗 Share'}</span>
+            <span>☰ Sheet</span>
           </button>
         </div>
-      </div>
 
-      {/* Section Quick Jump Filter Pills (Visual mode) */}
-      {viewMode === 'visual' && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        {/* Center: Section Filter Pills */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
           {[
-            { id: 'all' as const, label: `All Sections (${deck.counts.main + deck.counts.extra + deck.counts.side})` },
+            { id: 'all' as const, label: `All (${deck.counts.main + deck.counts.extra + deck.counts.side})` },
+            { id: 'main' as const, label: `Main (${deck.counts.main})` },
             { id: 'monsters' as const, label: `Monsters (${monsters.reduce((a, b) => a + b.count, 0)})` },
             { id: 'spells' as const, label: `Spells (${spells.reduce((a, b) => a + b.count, 0)})` },
             { id: 'traps' as const, label: `Traps (${traps.reduce((a, b) => a + b.count, 0)})` },
-            { id: 'extra' as const, label: `Extra Deck (${deck.counts.extra})` },
-            { id: 'side' as const, label: `Side Deck (${deck.counts.side})` },
+            { id: 'extra' as const, label: `Extra (${deck.counts.extra})` },
+            { id: 'side' as const, label: `Side (${deck.counts.side})` },
+            { id: 'pointed' as const, label: `⭐ Pointed (${pointInvestments.length})` },
           ].map(sec => (
             <button
               key={sec.id}
               onClick={() => setSectionFilter(sec.id)}
               style={{
-                background: sectionFilter === sec.id ? 'var(--color-cyan)' : 'var(--bg-surface)',
-                color: sectionFilter === sec.id ? '#07090e' : 'var(--text-muted)',
-                border: `1px solid ${sectionFilter === sec.id ? 'var(--color-cyan)' : 'var(--border-subtle)'}`,
-                borderRadius: 6,
-                padding: '4px 10px',
-                fontSize: '0.725rem',
+                background: sectionFilter === sec.id ? (sec.id === 'pointed' ? 'var(--color-gold)' : 'var(--color-cyan)') : 'rgba(255, 255, 255, 0.05)',
+                color: sectionFilter === sec.id ? '#07090e' : (sec.id === 'pointed' ? 'var(--color-gold-light)' : 'var(--text-muted)'),
+                border: `1px solid ${sectionFilter === sec.id ? (sec.id === 'pointed' ? 'var(--color-gold)' : 'var(--color-cyan)') : 'var(--border-subtle)'}`,
+                borderRadius: 5,
+                padding: '4px 8px',
+                fontSize: '0.7rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -1146,23 +1176,51 @@ export function TournamentDeckView({
             </button>
           ))}
         </div>
-      )}
 
-      {/* 6. Deckboard Content (Visual Cardboard or Text Checklist) */}
+        {/* Right: In-deck Search Input */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input
+            type="text"
+            placeholder="Search cards..."
+            value={filterQuery}
+            onChange={e => setFilterQuery(e.target.value)}
+            style={{
+              background: 'var(--bg-primary)',
+              border: '1px solid var(--border-subtle)',
+              color: '#fff',
+              padding: '5px 10px',
+              borderRadius: 5,
+              fontSize: '0.75rem',
+              outline: 'none',
+              width: 140,
+            }}
+          />
+          {filterQuery && (
+            <button
+              onClick={() => setFilterQuery('')}
+              style={{ background: 'none', border: 'none', color: 'var(--color-red)', fontSize: '0.7rem', cursor: 'pointer' }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 5. Deckboard Content: Visual Cardboard or Text Checklist */}
       {viewMode === 'visual' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Main Deck Container */}
-          {['all', 'monsters', 'spells', 'traps'].includes(sectionFilter) && (
-            <div className="glass-panel" style={{ padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+          {['all', 'main', 'monsters', 'spells', 'traps', 'pointed'].includes(sectionFilter) && (
+            <div className="glass-panel" style={{ padding: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid var(--border-subtle)' }}>
                 <div>
-                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>Main Deck</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                       ({deck.counts.main} cards)
                     </span>
                   </h3>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)', marginTop: 2 }}>
                     {monsters.reduce((acc, c) => acc + c.count, 0)} Monsters • {spells.reduce((acc, c) => acc + c.count, 0)} Spells • {traps.reduce((acc, c) => acc + c.count, 0)} Traps
                   </div>
                 </div>
@@ -1174,30 +1232,30 @@ export function TournamentDeckView({
                 </div>
               </div>
 
-              {/* Monsters Section */}
-              {['all', 'monsters'].includes(sectionFilter) && monsters.length > 0 && (
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-gold-light)', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.5px' }}>
+              {/* Monsters */}
+              {['all', 'main', 'monsters', 'pointed'].includes(sectionFilter) && monsters.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-gold-light)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.5px' }}>
                     Monsters ({monsters.reduce((acc, c) => acc + c.count, 0)})
                   </div>
                   {renderCardGrid(monsters, 'Main Deck Monsters')}
                 </div>
               )}
 
-              {/* Spells Section */}
-              {['all', 'spells'].includes(sectionFilter) && spells.length > 0 && (
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.5px' }}>
+              {/* Spells */}
+              {['all', 'main', 'spells', 'pointed'].includes(sectionFilter) && spells.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.5px' }}>
                     Spells ({spells.reduce((acc, c) => acc + c.count, 0)})
                   </div>
                   {renderCardGrid(spells, 'Main Deck Spells')}
                 </div>
               )}
 
-              {/* Traps Section */}
-              {['all', 'traps'].includes(sectionFilter) && traps.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f472b6', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.5px' }}>
+              {/* Traps */}
+              {['all', 'main', 'traps', 'pointed'].includes(sectionFilter) && traps.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f472b6', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.5px' }}>
                     Traps ({traps.reduce((acc, c) => acc + c.count, 0)})
                   </div>
                   {renderCardGrid(traps, 'Main Deck Traps')}
@@ -1207,18 +1265,18 @@ export function TournamentDeckView({
           )}
 
           {/* Extra Deck Container */}
-          {['all', 'extra'].includes(sectionFilter) && (
-            <div className="glass-panel" style={{ padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+          {['all', 'extra', 'pointed'].includes(sectionFilter) && deck.counts.extra > 0 && (
+            <div className="glass-panel" style={{ padding: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid var(--border-subtle)' }}>
                 <div>
-                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>Extra Deck</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                       ({deck.counts.extra} cards)
                     </span>
                   </h3>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
-                    Fusion, Synchro, and Xyz Monsters (Link &amp; Pendulum monsters are prohibited in Genesys)
+                  <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                    Xyz Monsters (Pendulum &amp; Link prohibited in Genesys format)
                   </div>
                 </div>
 
@@ -1234,18 +1292,18 @@ export function TournamentDeckView({
           )}
 
           {/* Side Deck Container */}
-          {['all', 'side'].includes(sectionFilter) && (
-            <div className="glass-panel" style={{ padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+          {['all', 'side', 'pointed'].includes(sectionFilter) && deck.counts.side > 0 && (
+            <div className="glass-panel" style={{ padding: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid var(--border-subtle)' }}>
                 <div>
-                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>Side Deck</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                       ({deck.counts.side} cards)
                     </span>
                   </h3>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
-                    Match sideboard adjustments (counted against the 100-point budget cap)
+                  <div style={{ fontSize: '0.725rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                    Match sideboard adjustments (counted against 100-point budget)
                   </div>
                 </div>
 
@@ -1262,10 +1320,16 @@ export function TournamentDeckView({
         </div>
       ) : (
         /* Text / Deck Sheet Checklist Mode */
-        <div className="glass-panel" style={{ padding: 24 }}>
-          {renderTextChecklist(deck.mainDeck, 'Main Deck', deck.counts.main, deck.pointsSummary.main)}
-          {renderTextChecklist(deck.extraDeck, 'Extra Deck', deck.counts.extra, deck.pointsSummary.extra)}
-          {renderTextChecklist(deck.sideDeck, 'Side Deck', deck.counts.side, deck.pointsSummary.side)}
+        <div className="glass-panel" style={{ padding: 20 }}>
+          {['all', 'main', 'monsters', 'spells', 'traps', 'pointed'].includes(sectionFilter) && (
+            renderTextChecklist(deck.mainDeck, 'Main Deck', deck.counts.main, deck.pointsSummary.main)
+          )}
+          {['all', 'extra', 'pointed'].includes(sectionFilter) && (
+            renderTextChecklist(deck.extraDeck, 'Extra Deck', deck.counts.extra, deck.pointsSummary.extra)
+          )}
+          {['all', 'side', 'pointed'].includes(sectionFilter) && (
+            renderTextChecklist(deck.sideDeck, 'Side Deck', deck.counts.side, deck.pointsSummary.side)
+          )}
         </div>
       )}
 
