@@ -1,0 +1,11 @@
+name = "genesysygo"
+main = "worker/index.ts"
+compatibility_date = "2026-10-20"
+
+routes = [
+  { pattern = "genesysygo.top/*", zone_name = "genesysygo.top" },
+  { pattern = "www.genesysygo.top/*", zone_name = "genesysygo.top" }
+]
+
+[observability]
+enabled = true
