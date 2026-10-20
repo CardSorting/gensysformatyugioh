@@ -1,16 +1,20 @@
-'use client';
-
-import React, { use } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { getTournamentById, getDefaultTournament } from '@/lib/tournaments';
+import { getTournamentById, getDefaultTournament, getAllTournaments } from '@/lib/tournaments';
 import { TournamentBracketView } from '@/components/TournamentBracketView';
 
-export default function DynamicTournamentBracketPage({
+export function generateStaticParams() {
+  return getAllTournaments().map((t) => ({
+    tournamentId: t.id,
+  }));
+}
+
+export default async function DynamicTournamentBracketPage({
   params,
 }: {
   params: Promise<{ tournamentId: string }>;
 }) {
-  const { tournamentId } = use(params);
+  const { tournamentId } = await params;
   const tournament = getTournamentById(tournamentId) || getDefaultTournament();
 
   if (!tournament) {

@@ -4,9 +4,8 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Production Domain](https://img.shields.io/badge/Domain-genesysygo.top-orange?style=flat-square&logo=cloudflare)](https://genesysygo.top)
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Production-00f0ff?style=flat-square&logo=vercel)](https://gensysygo.vercel.app)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-genesysygo.pages.dev-f38020?style=flat-square&logo=cloudflarepages)](https://genesysygo.pages.dev)
+[![Cloudflare Anycast](https://img.shields.io/badge/Edge%20Network-Cloudflare%20Global%20Anycast-F38020?style=flat-square&logo=cloudflare)](https://genesysygo.top)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-genesysygo.pages.dev-F38020?style=flat-square&logo=cloudflarepages)](https://genesysygo.pages.dev)
 [![Tests](https://img.shields.io/badge/Tests-59%2F59%20Passing-emerald?style=flat-square)](https://nodejs.org/api/test.html)
 [![Storage](https://img.shields.io/badge/Storage-BroccoliDB%20CAS%20Vault-green?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)

@@ -1,16 +1,21 @@
-'use client';
-
-import React, { use } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { getDeckUniversal } from '@/lib/tournaments';
+import { getDeckUniversal, getAllDecksAcrossAllTournaments } from '@/lib/tournaments';
 import { TournamentDeckView } from '@/components/TournamentDeckView';
 
-export default function UniversalDeckDetailPage({
+export function generateStaticParams() {
+  const all = getAllDecksAcrossAllTournaments();
+  return all.map(({ deck }) => ({
+    id: deck.id,
+  }));
+}
+
+export default async function UniversalDeckDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = await params;
   const result = getDeckUniversal(id);
 
   if (!result) {

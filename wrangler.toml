@@ -1,12 +1,3 @@
 name = "genesysygo"
-main = "worker/index.ts"
 compatibility_date = "2026-10-20"
-pages_build_output_dir = "public"
-
-routes = [
-  { pattern = "genesysygo.top/*", zone_name = "genesysygo.top" },
-  { pattern = "www.genesysygo.top/*", zone_name = "genesysygo.top" }
-]
-
-[observability]
-enabled = true
+pages_build_output_dir = "out"

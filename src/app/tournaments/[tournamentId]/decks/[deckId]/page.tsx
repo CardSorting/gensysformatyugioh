@@ -1,16 +1,27 @@
-'use client';
-
-import React, { use } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { getDeckFromTournament, getTournamentById, DEFAULT_TOURNAMENT_ID } from '@/lib/tournaments';
+import {
+  getDeckFromTournament,
+  getTournamentById,
+  DEFAULT_TOURNAMENT_ID,
+  getAllDecksAcrossAllTournaments,
+} from '@/lib/tournaments';
 import { TournamentDeckView } from '@/components/TournamentDeckView';
 
-export default function TournamentDecklistPage({
+export function generateStaticParams() {
+  const all = getAllDecksAcrossAllTournaments();
+  return all.map(({ tournament, deck }) => ({
+    tournamentId: tournament.id,
+    deckId: deck.id,
+  }));
+}
+
+export default async function TournamentDecklistPage({
   params,
 }: {
   params: Promise<{ tournamentId: string; deckId: string }>;
 }) {
-  const { tournamentId, deckId } = use(params);
+  const { tournamentId, deckId } = await params;
   const tournament = getTournamentById(tournamentId) || getTournamentById(DEFAULT_TOURNAMENT_ID);
   const deck = tournament ? getDeckFromTournament(tournament.id, deckId) : undefined;
 

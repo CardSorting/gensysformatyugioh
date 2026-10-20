@@ -11,7 +11,7 @@ interface ExecutionContext {
 const worker = {
   async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    const upstream = env.UPSTREAM_ORIGIN || 'https://gensysygo.vercel.app';
+    const upstream = env.UPSTREAM_ORIGIN || 'https://genesysygo.pages.dev';
     const targetUrl = new URL(url.pathname + url.search, upstream);
 
     const headers = new Headers(request.headers);
