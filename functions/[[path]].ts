@@ -2,7 +2,17 @@ interface Env {
   UPSTREAM_ORIGIN?: string;
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
+interface PagesContext {
+  request: Request;
+  functionPath: string;
+  waitUntil: (promise: Promise<unknown>) => void;
+  next: (input?: Request | string, init?: RequestInit) => Promise<Response>;
+  env: Env;
+  params: Record<string, string | string[]>;
+  data: Record<string, unknown>;
+}
+
+export const onRequest = async (context: PagesContext): Promise<Response> => {
   const url = new URL(context.request.url);
   const upstream = context.env.UPSTREAM_ORIGIN || 'https://gensysygo.vercel.app';
   const targetUrl = new URL(url.pathname + url.search, upstream);

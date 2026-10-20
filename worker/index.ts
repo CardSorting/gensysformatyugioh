@@ -1,7 +1,17 @@
-export default {
-  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
+interface WorkerEnv {
+  UPSTREAM_ORIGIN?: string;
+  [key: string]: unknown;
+}
+
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+}
+
+const worker = {
+  async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    const upstream = 'https://gensysygo.vercel.app';
+    const upstream = env.UPSTREAM_ORIGIN || 'https://gensysygo.vercel.app';
     const targetUrl = new URL(url.pathname + url.search, upstream);
 
     const headers = new Headers(request.headers);
@@ -31,3 +41,5 @@ export default {
     }
   },
 };
+
+export default worker;
