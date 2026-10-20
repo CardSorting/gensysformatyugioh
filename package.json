@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "rm -rf .broccolidb-test && BROCCOLIDB_WORKSPACE_ROOT=.broccolidb-test tsx --test --test-concurrency=1 'src/**/*.test.ts'"
   },
   "dependencies": {
     "next": "16.4.2",
@@ -19,6 +20,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

@@ -1,0 +1,904 @@
+{
+  "id": "genesys-giant-card-houston-2026",
+  "title": "Sunday's Genesys ATTACK OF THE GIANT CARD!!",
+  "shortTitle": "Giant Card Houston 2026",
+  "date": "October 18, 2026",
+  "year": 2026,
+  "location": "Houston, TX",
+  "city": "Houston",
+  "country": "United States",
+  "tier": "Championship Playoff",
+  "status": "Completed",
+  "sourceUrl": "https://yugiohblog.konami.com/2026/ycs/sundays-genesys-attack-of-the-giant-card-top-4/",
+  "format": "Yu-Gi-Oh! Genesys (100 Point Budget)",
+  "totalDecks": 4,
+  "champion": {
+    "name": "Jasper Martin",
+    "archetype": "Predaplant True Draco",
+    "deckId": "giant-card-houston-2026-rank-1",
+    "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/35272499.jpg"
+  },
+  "metagame": [
+    {
+      "archetype": "Predaplant True Draco",
+      "count": 1,
+      "percentage": 25
+    },
+    {
+      "archetype": "Dinosaur GMX",
+      "count": 1,
+      "percentage": 25
+    },
+    {
+      "archetype": "Blitzclique Ashtra",
+      "count": 1,
+      "percentage": 25
+    },
+    {
+      "archetype": "Snake-Eye Fire King",
+      "count": 1,
+      "percentage": 25
+    }
+  ],
+  "bracket": {
+    "finals": {
+      "matchId": "gc-final-1",
+      "round": "Finals",
+      "player1": {
+        "id": "giant-card-houston-2026-rank-1",
+        "name": "Jasper Martin",
+        "archetype": "Predaplant True Draco",
+        "rank": 1,
+        "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/15177726.jpg",
+        "winner": true,
+        "score": 2
+      },
+      "player2": {
+        "id": "giant-card-houston-2026-rank-2",
+        "name": "Dwayne Howell",
+        "archetype": "Dinosaur GMX",
+        "rank": 2,
+        "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/18940556.jpg",
+        "winner": false,
+        "score": 1
+      }
+    },
+    "semifinals": [
+      {
+        "matchId": "gc-semi-1",
+        "round": "Top 4",
+        "player1": {
+          "id": "giant-card-houston-2026-rank-1",
+          "name": "Jasper Martin",
+          "archetype": "Predaplant True Draco",
+          "rank": 1,
+          "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/15177726.jpg",
+          "winner": true,
+          "score": 2
+        },
+        "player2": {
+          "id": "giant-card-houston-2026-rank-3",
+          "name": "Henry Gullens",
+          "archetype": "Blitzclique Ashtra",
+          "rank": 3,
+          "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/58916810.jpg",
+          "winner": false,
+          "score": 0
+        }
+      },
+      {
+        "matchId": "gc-semi-2",
+        "round": "Top 4",
+        "player1": {
+          "id": "giant-card-houston-2026-rank-2",
+          "name": "Dwayne Howell",
+          "archetype": "Dinosaur GMX",
+          "rank": 2,
+          "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/18940556.jpg",
+          "winner": true,
+          "score": 2
+        },
+        "player2": {
+          "id": "giant-card-houston-2026-rank-4",
+          "name": "Savior Williams",
+          "archetype": "Snake-Eye Fire King",
+          "rank": 4,
+          "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/48452496.jpg",
+          "winner": false,
+          "score": 1
+        }
+      }
+    ],
+    "quarterfinals": []
+  },
+  "decks": [
+    {
+      "id": "giant-card-houston-2026-rank-1",
+      "rank": 1,
+      "name": "Jasper Martin",
+      "archetype": "Predaplant True Draco",
+      "signatureCard": "Predaplant Ophrys Scorpio",
+      "placement": "1st Place Champion",
+      "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/15177726.jpg",
+      "signatureCardId": 15177726,
+      "mainDeck": [
+        {
+          "count": 3,
+          "name": "Predaplant Ophrys Scorpio",
+          "cardId": 35272499,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/35272499.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/35272499.jpg"
+        },
+        {
+          "count": 1,
+          "name": "Predaplant Darlingtonia Cobra",
+          "cardId": 61677004,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/61677004.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/61677004.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ignis Heat, the True Dracowarrior",
+          "cardId": 22499034,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/22499034.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/22499034.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Dinomight Knight, the True Dracofighter",
+          "cardId": 58984738,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/58984738.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/58984738.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ghost Ogre & Snow Rabbit",
+          "cardId": 59438930,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/59438930.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/59438930.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Ash Blossom & Joyous Spring",
+          "cardId": 14558127,
+          "points": 18,
+          "totalPoints": 36,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14558127.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14558127.jpg"
+        },
+        {
+          "count": 1,
+          "name": "Dragonic Diagram",
+          "cardId": 13035077,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/13035077.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/13035077.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Disciples of the True Dracophoenix",
+          "cardId": 75425320,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/75425320.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/75425320.jpg"
+        },
+        {
+          "count": 3,
+          "name": "True King's Return",
+          "cardId": 35125879,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/35125879.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/35125879.jpg"
+        },
+        {
+          "count": 3,
+          "name": "True Draco Apocalypse",
+          "cardId": 61529473,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/61529473.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/61529473.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Dominus Purge",
+          "cardId": 97045737,
+          "points": 10,
+          "totalPoints": 30,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/97045737.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/97045737.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Mystical Space Typhoon",
+          "cardId": 5318639,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/5318639.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/5318639.jpg"
+        },
+        {
+          "count": 0,
+          "name": "Skill Drain",
+          "cardId": 82732705,
+          "points": 100,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/82732705.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/82732705.jpg"
+        }
+      ],
+      "extraDeck": [
+        {
+          "count": 2,
+          "name": "Starving Venom Fusion Dragon",
+          "cardId": 41209827,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Fusion Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/41209827.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/41209827.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Predaplant Dragostapelia",
+          "cardId": 69946549,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Fusion Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/69946549.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/69946549.jpg"
+        },
+        {
+          "count": 0,
+          "name": "Abyss Dweller",
+          "cardId": 21044178,
+          "points": 100,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/21044178.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/21044178.jpg"
+        }
+      ],
+      "sideDeck": [
+        {
+          "count": 3,
+          "name": "Lava Golem",
+          "cardId": 102380,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/102380.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/102380.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Typhoon",
+          "cardId": 14883228,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14883228.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14883228.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Debunk",
+          "cardId": 65703851,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/65703851.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/65703851.jpg"
+        }
+      ],
+      "pointsSummary": {
+        "total": 78,
+        "main": 78,
+        "extra": 0,
+        "side": 0,
+        "budget": 100,
+        "remaining": 22
+      },
+      "counts": {
+        "main": 31,
+        "extra": 4,
+        "side": 9
+      }
+    },
+    {
+      "id": "giant-card-houston-2026-rank-2",
+      "rank": 2,
+      "name": "Dwayne Howell",
+      "archetype": "Dinosaur GMX",
+      "signatureCard": "Ultimate Conductor Tyranno",
+      "placement": "2nd Place Finalist",
+      "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/18940556.jpg",
+      "signatureCardId": 18940556,
+      "mainDeck": [
+        {
+          "count": 2,
+          "name": "Ultimate Conductor Tyranno",
+          "cardId": 18940556,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/18940556.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/18940556.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Souleating Oviraptor",
+          "cardId": 44335251,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/44335251.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/44335251.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Babycerasaurus",
+          "cardId": 36042004,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/36042004.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/36042004.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Miscellaneousaurus",
+          "cardId": 38572779,
+          "points": 67,
+          "totalPoints": 201,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/38572779.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/38572779.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ash Blossom & Joyous Spring",
+          "cardId": 14558127,
+          "points": 18,
+          "totalPoints": 54,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14558127.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14558127.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ghost Ogre & Snow Rabbit",
+          "cardId": 59438930,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/59438930.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/59438930.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Fossil Dig",
+          "cardId": 47325505,
+          "points": 18,
+          "totalPoints": 54,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/47325505.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/47325505.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Lost World",
+          "cardId": 17228908,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/17228908.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/17228908.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Dominus Purge",
+          "cardId": 97045737,
+          "points": 10,
+          "totalPoints": 30,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/97045737.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/97045737.jpg"
+        }
+      ],
+      "extraDeck": [
+        {
+          "count": 2,
+          "name": "Evolzar Laggia",
+          "cardId": 74294676,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/74294676.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/74294676.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Evolzar Dolkka",
+          "cardId": 42752141,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/42752141.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/42752141.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Dingirsu, the Orcust of the Evening Star",
+          "cardId": 93854893,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/93854893.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/93854893.jpg"
+        }
+      ],
+      "sideDeck": [
+        {
+          "count": 3,
+          "name": "Dark Ruler No More",
+          "cardId": 54693926,
+          "points": 2,
+          "totalPoints": 6,
+          "type": "Spell Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/54693926.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/54693926.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Cosmic Cyclone",
+          "cardId": 8267140,
+          "points": 1,
+          "totalPoints": 3,
+          "type": "Spell Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/8267140.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/8267140.jpg"
+        }
+      ],
+      "pointsSummary": {
+        "total": 100,
+        "main": 351,
+        "extra": 0,
+        "side": 9,
+        "budget": 100,
+        "remaining": 0
+      },
+      "counts": {
+        "main": 26,
+        "extra": 6,
+        "side": 6
+      }
+    },
+    {
+      "id": "giant-card-houston-2026-rank-3",
+      "rank": 3,
+      "name": "Henry Gullens",
+      "archetype": "Blitzclique Ashtra",
+      "signatureCard": "Crackle Blitzclique",
+      "placement": "Top 4 Semifinalist",
+      "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/58916810.jpg",
+      "signatureCardId": 58916810,
+      "mainDeck": [
+        {
+          "count": 3,
+          "name": "Crackle Blitzclique",
+          "cardId": 58916810,
+          "points": 6,
+          "totalPoints": 18,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/58916810.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/58916810.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Surge Blitzclique",
+          "cardId": 22912101,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/22912101.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/22912101.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Grain Blitzclique",
+          "cardId": 84401954,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/84401954.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/84401954.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Whisker Blitzclique",
+          "cardId": 85523502,
+          "points": 11,
+          "totalPoints": 22,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/85523502.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/85523502.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ghost Ogre & Snow Rabbit",
+          "cardId": 59438930,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/59438930.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/59438930.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Ash Blossom & Joyous Spring",
+          "cardId": 14558127,
+          "points": 18,
+          "totalPoints": 36,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14558127.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14558127.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Blitzclique - Breakaway",
+          "cardId": 64049762,
+          "points": 3,
+          "totalPoints": 9,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/64049762.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/64049762.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Blitzclique Alternator",
+          "cardId": 59921227,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/59921227.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/59921227.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Dominus Purge",
+          "cardId": 97045737,
+          "points": 10,
+          "totalPoints": 30,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/97045737.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/97045737.jpg"
+        }
+      ],
+      "extraDeck": [
+        {
+          "count": 2,
+          "name": "Dingirsu, the Orcust of the Evening Star",
+          "cardId": 93854893,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/93854893.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/93854893.jpg"
+        }
+      ],
+      "sideDeck": [
+        {
+          "count": 3,
+          "name": "Typhoon",
+          "cardId": 14883228,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Trap Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14883228.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14883228.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Lava Golem",
+          "cardId": 102380,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/102380.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/102380.jpg"
+        }
+      ],
+      "pointsSummary": {
+        "total": 100,
+        "main": 139,
+        "extra": 0,
+        "side": 0,
+        "budget": 100,
+        "remaining": 0
+      },
+      "counts": {
+        "main": 25,
+        "extra": 2,
+        "side": 6
+      }
+    },
+    {
+      "id": "giant-card-houston-2026-rank-4",
+      "rank": 4,
+      "name": "Savior Williams",
+      "archetype": "Snake-Eye Fire King",
+      "signatureCard": "Snake-Eyes Flamberge Dragon",
+      "placement": "Top 4 Semifinalist",
+      "thumbnailUrl": "https://images.ygoprodeck.com/images/cards_cropped/48452496.jpg",
+      "signatureCardId": 48452496,
+      "mainDeck": [
+        {
+          "count": 2,
+          "name": "Snake-Eyes Flamberge Dragon",
+          "cardId": 48452496,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/48452496.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/48452496.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Snake-Eye Ash",
+          "cardId": 9674034,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/9674034.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/9674034.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Fire King High Avatar Kirin",
+          "cardId": 2526224,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/2526224.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/2526224.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Sacred Fire King Garunix",
+          "cardId": 66431519,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Effect Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/66431519.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/66431519.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ghost Ogre & Snow Rabbit",
+          "cardId": 59438930,
+          "points": 4,
+          "totalPoints": 12,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/59438930.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/59438930.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Ash Blossom & Joyous Spring",
+          "cardId": 14558127,
+          "points": 18,
+          "totalPoints": 54,
+          "type": "Tuner Monster",
+          "section": "main",
+          "category": "monster",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/14558127.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/14558127.jpg"
+        },
+        {
+          "count": 2,
+          "name": "Fire King Island",
+          "cardId": 57554544,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/57554544.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/57554544.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Fire King Sanctuary",
+          "cardId": 65305978,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "Spell Card",
+          "section": "main",
+          "category": "spell",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/65305978.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/65305978.jpg"
+        },
+        {
+          "count": 3,
+          "name": "Dominus Purge",
+          "cardId": 97045737,
+          "points": 10,
+          "totalPoints": 30,
+          "type": "Trap Card",
+          "section": "main",
+          "category": "trap",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/97045737.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/97045737.jpg"
+        }
+      ],
+      "extraDeck": [
+        {
+          "count": 2,
+          "name": "Dingirsu, the Orcust of the Evening Star",
+          "cardId": 93854893,
+          "points": 0,
+          "totalPoints": 0,
+          "type": "XYZ Monster",
+          "section": "extra",
+          "category": "extra",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/93854893.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/93854893.jpg"
+        }
+      ],
+      "sideDeck": [
+        {
+          "count": 3,
+          "name": "Dark Ruler No More",
+          "cardId": 54693926,
+          "points": 2,
+          "totalPoints": 6,
+          "type": "Spell Card",
+          "section": "side",
+          "category": "side",
+          "imageUrl": "https://images.ygoprodeck.com/images/cards_small/54693926.jpg",
+          "imageCropped": "https://images.ygoprodeck.com/images/cards_cropped/54693926.jpg"
+        }
+      ],
+      "pointsSummary": {
+        "total": 100,
+        "main": 108,
+        "extra": 0,
+        "side": 6,
+        "budget": 100,
+        "remaining": 0
+      },
+      "counts": {
+        "main": 24,
+        "extra": 2,
+        "side": 3
+      }
+    }
+  ]
+}
